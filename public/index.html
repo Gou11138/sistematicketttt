@@ -735,6 +735,45 @@
       #support-widget-btn { bottom: 20px; right: 16px; }
     }
 
+    /* ===== NAVBAR MOBILE ===== */
+    @media (max-width: 600px) {
+      .top-navbar {
+        top: 10px;
+        padding: 6px 10px;
+        gap: 2px;
+      }
+      .navbar-brand {
+        font-size: 15px;
+        margin-right: 4px;
+      }
+      .navbar-link {
+        font-size: 13px;
+        padding: 6px 10px;
+      }
+      .navbar-divider {
+        margin: 0 4px;
+      }
+      /* Esconde nome do usuário no mobile, mantém só o avatar */
+      #navbar-name { display: none; }
+      .navbar-admin-btn { display: none !important; }
+      .navbar-user img {
+        width: 24px; height: 24px;
+      }
+      .navbar-logout-btn {
+        padding: 5px 8px;
+        font-size: 11px;
+      }
+      .navbar-right {
+        gap: 5px;
+        margin-left: 4px;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .navbar-brand { display: none; }
+      .navbar-divider:first-of-type { display: none; }
+    }
+
     @media (max-width: 600px) {
       .hero-nav { padding: 14px 16px; }
       .ticket-form-body { padding: 18px; }
