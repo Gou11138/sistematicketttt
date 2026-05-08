@@ -219,6 +219,8 @@ async function init() {
     const td = await tr.json();
     if (td.ticket) { showChatSection(td.ticket, td.messages); }
     else { showHomeSection(); }
+    // Mostra o widget flutuante
+    showSupportWidget(currentUser, !!td.ticket);
   } catch (e) {
     console.error('Init error:', e);
     showLoginScreen();
@@ -356,4 +358,203 @@ function showToast(message, type = 'default') {
   const t = document.createElement('div'); t.className = `toast ${type}`;
   t.innerHTML = `<span>${{success:'✅',error:'❌',warning:'⚠️'}[type]||'💬'}</span> ${message}`;
   c.appendChild(t); setTimeout(() => { t.classList.add('removing'); setTimeout(() => t.remove(), 300); }, 4000);
+}
+
+// ==================== WIDGET FLUTUANTE ====================
+let widgetOpen = false;
+let widgetScreen = 'home'; // 'home' | 'chat' | 'form'
+let widgetPolling = null;
+let widgetLastTime = '1970-01-01T00:00:00.000Z';
+let widgetRenderedIds = new Set();
+
+function showSupportWidget(user, hasTicket) {
+  const btn = document.getElementById('support-widget-btn');
+  if (!btn) return;
+  btn.style.display = 'flex';
+  const greeting = document.getElementById('widget-greeting');
+  if (greeting) greeting.textContent = `Olá, ${user.username}! 👋`;
+
+  // Atualiza botões conforme estado do ticket
+  const btnChat = document.getElementById('widget-btn-chat');
+  const btnNew  = document.getElementById('widget-btn-new');
+  if (hasTicket) {
+    if (btnChat) btnChat.style.display = 'flex';
+    if (btnNew)  btnNew.style.display  = 'none';
+  } else {
+    if (btnChat) btnChat.style.display = 'none';
+    if (btnNew)  btnNew.style.display  = 'flex';
+  }
+}
+
+function toggleWidget() {
+  widgetOpen = !widgetOpen;
+  const panel = document.getElementById('support-widget-panel');
+  const icon  = document.getElementById('widget-icon');
+  if (!panel) return;
+  if (widgetOpen) {
+    panel.style.display = 'flex';
+    if (icon) icon.textContent = '✕';
+    // Se já tem ticket aberto, vai direto pro chat
+    if (currentTicket) {
+      widgetOpenChat();
+    } else {
+      widgetGoHome();
+    }
+  } else {
+    panel.style.display = 'none';
+    if (icon) icon.textContent = '💬';
+    widgetStopPolling();
+  }
+}
+
+function widgetGoHome() {
+  widgetScreen = 'home';
+  document.getElementById('widget-home').style.display  = 'flex';
+  document.getElementById('widget-chat').style.display  = 'none';
+  document.getElementById('widget-form').style.display  = 'none';
+  widgetStopPolling();
+}
+
+function widgetOpenChat() {
+  if (!currentTicket) { widgetOpenForm(); return; }
+  widgetScreen = 'chat';
+  document.getElementById('widget-home').style.display  = 'none';
+  document.getElementById('widget-chat').style.display  = 'flex';
+  document.getElementById('widget-form').style.display  = 'none';
+
+  // Renderiza mensagens existentes
+  widgetRenderedIds = new Set();
+  const msgs = document.getElementById('widget-messages');
+  if (msgs) msgs.innerHTML = '';
+  // Busca mensagens atuais
+  fetch(`/api/tickets/${currentTicket.id}/messages?since=1970-01-01T00:00:00.000Z`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.messages) {
+        data.messages.forEach(m => widgetAppendMessage(m));
+        if (data.messages.length > 0)
+          widgetLastTime = data.messages[data.messages.length - 1].created_at;
+      }
+      widgetUpdateStatus(currentTicket.status);
+    }).catch(() => {});
+
+  widgetStartPolling();
+}
+
+function widgetOpenForm() {
+  widgetScreen = 'form';
+  document.getElementById('widget-home').style.display  = 'none';
+  document.getElementById('widget-chat').style.display  = 'none';
+  document.getElementById('widget-form').style.display  = 'flex';
+  document.getElementById('widget-form-alert').innerHTML = '';
+}
+
+function widgetAppendMessage(m) {
+  if (widgetRenderedIds.has(m.id)) return;
+  widgetRenderedIds.add(m.id);
+  const container = document.getElementById('widget-messages');
+  if (!container) return;
+  const isClient = m.sender === 'client';
+  const def = 'https://cdn.discordapp.com/embed/avatars/0.png';
+  const av  = m.sender_avatar || def;
+  const div = document.createElement('div');
+  div.className = `message ${isClient ? 'client' : 'admin'}`;
+  div.style.cssText = 'max-width:88%';
+  div.innerHTML = `<img class="message-avatar" src="${escapeHtml(av)}" alt="" onerror="this.src='${def}'" style="width:26px;height:26px;">
+    <div><div class="message-bubble" style="font-size:13px;">${escapeHtml(m.content)}</div>
+    <div class="message-time">${escapeHtml(m.sender_name)} · ${formatTime(m.created_at)}</div></div>`;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function widgetUpdateStatus(status) {
+  const inputArea   = document.getElementById('widget-input-area');
+  const closedBanner = document.getElementById('widget-closed-banner');
+  const headerStatus = document.getElementById('widget-header-status');
+  if (inputArea)    inputArea.style.display    = status === 'closed' ? 'none' : 'flex';
+  if (closedBanner) closedBanner.style.display = status === 'closed' ? 'block' : 'none';
+  if (headerStatus) headerStatus.textContent   = status === 'closed' ? '🔴 Ticket encerrado' : '🟢 Online — respondendo tickets';
+}
+
+function widgetStartPolling() {
+  widgetStopPolling();
+  widgetPolling = setInterval(async () => {
+    if (!currentTicket || widgetScreen !== 'chat') return;
+    try {
+      const res  = await fetch(`/api/tickets/${currentTicket.id}/messages?since=${encodeURIComponent(widgetLastTime)}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.messages && data.messages.length > 0) {
+        data.messages.forEach(m => widgetAppendMessage(m));
+        widgetLastTime = data.messages[data.messages.length - 1].created_at;
+        // Badge de notificação se painel fechado
+        if (!widgetOpen) {
+          const badge = document.getElementById('widget-badge');
+          if (badge) badge.style.display = 'block';
+        }
+      }
+      if (data.status) widgetUpdateStatus(data.status);
+    } catch {}
+  }, 2500);
+}
+
+function widgetStopPolling() {
+  if (widgetPolling) { clearInterval(widgetPolling); widgetPolling = null; }
+}
+
+async function widgetSendMessage() {
+  const input = document.getElementById('widget-input');
+  const content = input?.value.trim();
+  if (!content || !currentTicket) return;
+  if (currentTicket.status === 'closed') return;
+  input.value = ''; input.style.height = 'auto';
+  try {
+    const res  = await fetch(`/api/tickets/${currentTicket.id}/messages`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content })
+    });
+    const data = await res.json();
+    if (data.message) {
+      widgetAppendMessage(data.message);
+      widgetLastTime = data.message.created_at;
+      // Sincroniza com o polling principal
+      lastMessageTime = data.message.created_at;
+    }
+  } catch { showToast('Erro ao enviar.', 'error'); }
+}
+
+async function widgetCreateTicket() {
+  const subject = document.getElementById('widget-subject')?.value.trim();
+  const message = document.getElementById('widget-message')?.value.trim();
+  const alertEl = document.getElementById('widget-form-alert');
+  if (!subject || !message) {
+    if (alertEl) alertEl.innerHTML = '<div class="alert alert-error" style="font-size:13px;padding:10px 14px;">⚠️ Preencha todos os campos.</div>';
+    return;
+  }
+  const btn = document.getElementById('widget-create-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Enviando...';
+  try {
+    const res  = await fetch('/api/tickets', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subject, message })
+    });
+    const data = await res.json();
+    if (data.success || data.ticketId) {
+      const td = await fetch(`/api/tickets/${data.ticketId}`).then(r => r.json());
+      currentTicket = td.ticket;
+      // Atualiza botões do widget
+      const btnChat = document.getElementById('widget-btn-chat');
+      const btnNew  = document.getElementById('widget-btn-new');
+      if (btnChat) btnChat.style.display = 'flex';
+      if (btnNew)  btnNew.style.display  = 'none';
+      showToast('🎫 Ticket criado!', 'success');
+      widgetLastTime = '1970-01-01T00:00:00.000Z';
+      widgetOpenChat();
+    } else {
+      if (alertEl) alertEl.innerHTML = `<div class="alert alert-error" style="font-size:13px;padding:10px 14px;">❌ ${escapeHtml(data.error || 'Erro.')}</div>`;
+    }
+  } catch {
+    if (alertEl) alertEl.innerHTML = '<div class="alert alert-error" style="font-size:13px;padding:10px 14px;">❌ Erro de conexão.</div>';
+  }
+  btn.disabled = false; btn.innerHTML = '🚀 Enviar Ticket';
 }
