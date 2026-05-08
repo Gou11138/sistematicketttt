@@ -50,11 +50,8 @@ if (!process.env.ADMIN_DISCORD_ID) {
   process.exit(1);
 }
 
-// ENCRYPTION_SECRET é a chave usada para criptografar dados no banco.
-// Deve ser SEMPRE a mesma — nunca mude após ter dados gravados.
-// Se não definida, usa SESSION_SECRET como fallback (compatibilidade).
 const ENCRYPTION_KEY = crypto.scryptSync(
-  process.env.ENCRYPTION_SECRET || process.env.SESSION_SECRET,
+  process.env.SESSION_SECRET,
   'ticket-salt-v1', 32
 );
 
@@ -162,15 +159,12 @@ app.get('/auth/discord/callback', rateLimit(60 * 1000, 10), async (req, res) => 
 
     const av = avatarUrl(u.id, u.avatar);
     await supabase.from('users').upsert({ id: u.id, username: s(u.username, 100), discriminator: u.discriminator || '0', avatar: u.avatar, avatar_url: av, email: encrypt(u.email), updated_at: new Date().toISOString() }, { onConflict: 'id' });
-    req.session.user = { id: u.id, username: s(u.username, 100), avatar: u.avatar, avatarUrl: av };
 
-    // isAdmin só é true se o ID bater exatamente com o ADMIN_DISCORD_ID do env
+    // cookie-session não tem .save() — atribuir diretamente já persiste no cookie
+    req.session.user = { id: u.id, username: s(u.username, 100), avatar: u.avatar, avatarUrl: av };
     req.session.isAdmin = (u.id === getAdminId());
 
-    req.session.save((err) => {
-      if (err) console.error('Session save error:', err);
-      res.redirect('/');
-    });
+    res.redirect('/');
   } catch (err) {
     console.error('OAuth error:', err.response?.data || err.message);
     res.redirect('/?error=auth_failed');
