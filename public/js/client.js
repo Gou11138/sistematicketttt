@@ -18,7 +18,7 @@ function navGoTo(tab) {
   });
 
   // Esconde tudo
-  const allSections = ['hero-section','features-section','main-content','footer-section','goupay-section','loja-section'];
+  const allSections = ['hero-section','features-section','main-content','footer-section','goupay-section','loja-section','discord-community-section'];
   allSections.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
@@ -75,6 +75,7 @@ function showHomeSection() {
   document.getElementById('new-ticket-section').style.display = 'none';
   if (document.getElementById('goupay-section')) document.getElementById('goupay-section').style.display = 'none';
   if (document.getElementById('loja-section')) document.getElementById('loja-section').style.display = 'none';
+  if (document.getElementById('discord-community-section')) document.getElementById('discord-community-section').style.display = 'block';
   stopPolling();
   currentNav = 'inicio';
   ['inicio','goupay','loja'].forEach(t => {
