@@ -47,12 +47,11 @@
     @keyframes cardIn { from { opacity: 0; transform: translateY(30px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
     .discord-login-logo {
       width: 80px; height: 80px;
-      background: linear-gradient(135deg, #0066ff, #0044cc);
+      background: transparent;
       border-radius: 22px;
       display: flex; align-items: center; justify-content: center;
       font-size: 40px;
       margin: 0 auto 24px;
-      box-shadow: 0 10px 40px rgba(0,100,255,0.4);
     }
     .discord-login-card h1 { color: white; font-size: 26px; font-weight: 800; margin-bottom: 8px; }
     .discord-login-card p { color: rgba(255,255,255,0.5); font-size: 15px; line-height: 1.6; margin-bottom: 32px; }
@@ -814,7 +813,9 @@
 <!-- ===== DISCORD LOGIN SCREEN ===== -->
 <div id="discord-login-screen" style="display: flex;">
   <div class="discord-login-card">
-    <div class="discord-login-logo">🎟️</div>
+    <div class="discord-login-logo">
+      <img src="https://i.imgur.com/T0xW1kj.png" alt="GouRp" style="width:60px;height:60px;object-fit:contain;mix-blend-mode:screen;filter:brightness(1.1);">
+    </div>
     <h1>GouRp — Central de Suporte</h1>
     <p>Conecte sua conta do Discord para acessar produtos, abrir tickets e acompanhar seu atendimento.</p>
     <div class="discord-login-error" id="login-error"></div>
