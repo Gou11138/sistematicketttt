@@ -25,15 +25,11 @@ function navGoTo(tab) {
   });
 
   if (tab === 'inicio') {
-    // Volta para o estado correto da tela inicial
-    if (currentTicket) {
-      document.getElementById('main-content').style.display = 'block';
-      document.getElementById('chat-section').style.display = 'block';
-    } else {
-      document.getElementById('hero-section').style.display = 'flex';
-      document.getElementById('features-section').style.display = 'block';
-      document.getElementById('footer-section').style.display = 'block';
-    }
+    // Sempre mostra a hero — chat fica só no widget
+    document.getElementById('hero-section').style.display = 'flex';
+    document.getElementById('features-section').style.display = 'block';
+    document.getElementById('footer-section').style.display = 'block';
+    if (document.getElementById('discord-community-section')) document.getElementById('discord-community-section').style.display = 'block';
   } else if (tab === 'goupay') {
     document.getElementById('goupay-section').style.display = 'block';
   } else if (tab === 'loja') {
@@ -217,8 +213,9 @@ async function init() {
 
     if (!tr.ok) { showHomeSection(); return; }
     const td = await tr.json();
-    if (td.ticket) { showChatSection(td.ticket, td.messages); }
-    else { showHomeSection(); }
+    // Sempre mostra a home — o chat fica só no widget flutuante
+    if (td.ticket) { currentTicket = td.ticket; }
+    showHomeSection();
     // Mostra o widget flutuante
     showSupportWidget(currentUser, !!td.ticket);
   } catch (e) {
@@ -267,11 +264,24 @@ async function createTicket() {
     const data = await fetch('/api/tickets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subject, message }) }).then(r => r.json());
     if (data.success) {
       const d = await fetch(`/api/tickets/${data.ticketId}`).then(r => r.json());
-      showChatSection(d.ticket, d.messages);
-      showToast('🎫 Ticket criado!', 'success');
+      currentTicket = d.ticket;
+      showToast('🎫 Ticket criado! Acompanhe pelo ícone de chat.', 'success');
+      showHomeSection();
+      // Abre o widget direto no chat
+      const btnChat = document.getElementById('widget-btn-chat');
+      const btnNew  = document.getElementById('widget-btn-new');
+      if (btnChat) btnChat.style.display = 'flex';
+      if (btnNew)  btnNew.style.display  = 'none';
+      setTimeout(() => { widgetOpen = false; toggleWidget(); }, 400);
     } else if (data.ticketId) {
       const d = await fetch(`/api/tickets/${data.ticketId}`).then(r => r.json());
-      showChatSection(d.ticket, d.messages);
+      currentTicket = d.ticket;
+      showHomeSection();
+      const btnChat = document.getElementById('widget-btn-chat');
+      const btnNew  = document.getElementById('widget-btn-new');
+      if (btnChat) btnChat.style.display = 'flex';
+      if (btnNew)  btnNew.style.display  = 'none';
+      setTimeout(() => { widgetOpen = false; toggleWidget(); }, 400);
     } else {
       showAlert('form-alert', 'error', '❌ ' + (data.error || 'Erro.'));
     }
