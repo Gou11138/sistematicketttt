@@ -517,6 +517,138 @@ app.get('/api/discord/roles', requireAuth, async (req, res) => {
   }
 });
 
+// ==================== NOTIFICAÇÃO POR DM ====================
+
+// Envia DM ao usuário via Discord Bot
+async function sendDiscordDM(userId, content) {
+  if (!DISCORD_BOT_TOKEN) return false;
+  try {
+    // Abre (ou reutiliza) um canal DM com o usuário
+    const dmRes = await axios.post(
+      'https://discord.com/api/v10/users/@me/channels',
+      { recipient_id: userId },
+      { headers: { Authorization: `Bot ${DISCORD_BOT_TOKEN}`, 'Content-Type': 'application/json' } }
+    );
+    const channelId = dmRes.data.id;
+    await axios.post(
+      `https://discord.com/api/v10/channels/${channelId}/messages`,
+      { content },
+      { headers: { Authorization: `Bot ${DISCORD_BOT_TOKEN}`, 'Content-Type': 'application/json' } }
+    );
+    return true;
+  } catch (err) {
+    // Código 50007 = usuário bloqueou DMs do bot — não é erro crítico
+    if (err.response?.data?.code !== 50007) {
+      console.error('Erro ao enviar DM:', err.response?.data || err.message);
+    }
+    return false;
+  }
+}
+
+// Cliente registra que está vendo o ticket (chamado pelo polling do front-end)
+app.post('/api/tickets/:id/seen', requireAuth, async (req, res) => {
+  const ticketId = s(req.params.id, 20).toUpperCase();
+  const { data: ticket } = await supabase
+    .from('tickets').select('user_id').eq('id', ticketId).single();
+  if (!ticket) return res.status(404).json({ error: 'Não encontrado.' });
+  if (ticket.user_id !== req.session.user.id) return res.status(403).json({ error: 'Acesso negado.' });
+
+  await supabase.from('tickets')
+    .update({ client_last_seen_at: new Date().toISOString() })
+    .eq('id', ticketId);
+
+  res.json({ success: true });
+});
+
+// Job de notificação: roda a cada 2 minutos e envia DM para clientes ausentes
+// "Ausente" = última mensagem do admin foi há mais de NOTIFY_DELAY_MS
+//             E o cliente não foi visto desde então
+//             E ainda não enviamos DM nas últimas NOTIFY_COOLDOWN_MS
+const NOTIFY_DELAY_MS    = 5  * 60 * 1000; // 5 min sem ver → avisa
+const NOTIFY_COOLDOWN_MS = 60 * 60 * 1000; // máximo 1 DM por hora por ticket
+
+async function runNotificationJob() {
+  if (!DISCORD_BOT_TOKEN) return;
+  try {
+    const now = new Date();
+    const delayThreshold    = new Date(now - NOTIFY_DELAY_MS).toISOString();
+    const cooldownThreshold = new Date(now - NOTIFY_COOLDOWN_MS).toISOString();
+
+    // Busca tickets abertos onde:
+    // 1. Existe pelo menos uma mensagem do admin mais recente que a última visita do cliente
+    // 2. O cliente não foi visto nos últimos NOTIFY_DELAY_MS
+    // 3. Não enviamos DM nas últimas NOTIFY_COOLDOWN_MS
+    const { data: tickets } = await supabase
+      .from('tickets')
+      .select('id, user_id, subject, client_last_seen_at, client_notified_at, updated_at')
+      .eq('status', 'open')
+      .or(`client_last_seen_at.is.null,client_last_seen_at.lt.${delayThreshold}`)
+      .or(`client_notified_at.is.null,client_notified_at.lt.${cooldownThreshold}`);
+
+    if (!tickets || tickets.length === 0) return;
+
+    for (const ticket of tickets) {
+      // Verifica se há mensagem do admin após a última visita do cliente
+      let adminMsgQuery = supabase
+        .from('messages')
+        .select('id', { count: 'exact', head: true })
+        .eq('ticket_id', ticket.id)
+        .eq('sender', 'admin');
+
+      if (ticket.client_last_seen_at) {
+        adminMsgQuery = adminMsgQuery.gt('created_at', ticket.client_last_seen_at);
+      }
+
+      const { count } = await adminMsgQuery;
+      if (!count || count === 0) continue; // nenhuma mensagem nova do admin
+
+      // Busca o URL do site para incluir na DM
+      const siteUrl = process.env.DISCORD_REDIRECT_URI
+        ? process.env.DISCORD_REDIRECT_URI.replace('/auth/discord/callback', '')
+        : 'o site de suporte';
+
+      const subject = ticket.subject ? decrypt(ticket.subject) : 'seu ticket';
+      const message =
+        `📬 **Você tem uma resposta esperando no seu ticket!**\n\n` +
+        `> **Assunto:** ${subject}\n` +
+        `> **Ticket:** \`#${ticket.id}\`\n\n` +
+        `Acesse ${siteUrl} para ver a resposta do suporte.\n` +
+        `*(Esta é uma notificação automática — não responda esta DM)*`;
+
+      const sent = await sendDiscordDM(ticket.user_id, message);
+
+      if (sent) {
+        await supabase.from('tickets')
+          .update({ client_notified_at: now.toISOString() })
+          .eq('id', ticket.id);
+        console.log(`📨 DM enviada para usuário ${ticket.user_id} — ticket #${ticket.id}`);
+      }
+    }
+  } catch (err) {
+    console.error('Erro no job de notificação:', err.message);
+  }
+}
+
+// Inicia o job apenas quando rodando como servidor (não em serverless/Vercel)
+if (require.main === module) {
+  const JOB_INTERVAL_MS = 2 * 60 * 1000; // verifica a cada 2 minutos
+  setInterval(runNotificationJob, JOB_INTERVAL_MS);
+  // Roda uma vez logo ao iniciar (após 10s para o servidor estabilizar)
+  setTimeout(runNotificationJob, 10 * 1000);
+  console.log(`🔔 Job de notificação por DM ativo (intervalo: ${JOB_INTERVAL_MS / 1000}s)`);
+}
+
+// Endpoint para acionar o job manualmente (útil em ambientes serverless como Vercel)
+// Protegido por um token secreto para evitar abuso
+app.post('/api/internal/notify-job', async (req, res) => {
+  const token = req.headers['x-job-token'];
+  if (!token || token !== process.env.JOB_SECRET_TOKEN) {
+    return res.status(401).json({ error: 'Não autorizado.' });
+  }
+  runNotificationJob().catch(console.error);
+  res.json({ success: true, message: 'Job iniciado.' });
+});
+
 // ==================== START ====================
 // Bloqueia qualquer rota /api/* não definida — evita exploração de endpoints
 app.all('/api/*', (req, res) => {
