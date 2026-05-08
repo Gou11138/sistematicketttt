@@ -50,8 +50,11 @@ if (!process.env.ADMIN_DISCORD_ID) {
   process.exit(1);
 }
 
+// ENCRYPTION_SECRET é a chave usada para criptografar dados no banco.
+// Deve ser SEMPRE a mesma — nunca mude após ter dados gravados.
+// Se não definida, usa SESSION_SECRET como fallback (compatibilidade).
 const ENCRYPTION_KEY = crypto.scryptSync(
-  process.env.SESSION_SECRET,
+  process.env.ENCRYPTION_SECRET || process.env.SESSION_SECRET,
   'ticket-salt-v1', 32
 );
 
