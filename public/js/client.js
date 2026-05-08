@@ -72,12 +72,24 @@ async function doLogout() {
 }
 
 // ==================== POLLING ====================
+let seenInterval = null;
+
 function startPolling() {
   stopPolling();
   pollingInterval = setInterval(pollMessages, 2000);
+  // Heartbeat: avisa o servidor que o cliente está vendo o ticket (a cada 30s)
+  sendSeenHeartbeat();
+  seenInterval = setInterval(sendSeenHeartbeat, 30 * 1000);
 }
 function stopPolling() {
   if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
+  if (seenInterval)    { clearInterval(seenInterval);    seenInterval = null; }
+}
+async function sendSeenHeartbeat() {
+  if (!currentTicket || currentTicket.status === 'closed') return;
+  try {
+    await fetch(`/api/tickets/${currentTicket.id}/seen`, { method: 'POST' });
+  } catch (e) { /* silencioso */ }
 }
 async function pollMessages() {
   if (!currentTicket) return;
