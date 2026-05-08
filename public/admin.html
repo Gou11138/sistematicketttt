@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel Admin — GouRp</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { background: #000000; overflow: hidden; }
+
+    /* ===== ACESSO NEGADO ===== */
+    #access-denied {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, #000000, #020b18);
+      flex-direction: column; gap: 16px; text-align: center; padding: 20px;
+    }
+    #access-denied h2 { color: white; font-size: 24px; }
+    #access-denied p { color: rgba(255,255,255,0.4); font-size: 15px; }
+
+    /* ===== ADMIN LAYOUT ===== */
+    #admin-screen { display: none; height: 100vh; flex-direction: column; }
+    .admin-topbar {
+      background: linear-gradient(135deg, #000000, #020b18);
+      padding: 0 22px; height: 58px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid rgba(0,100,255,0.15); flex-shrink: 0;
+    }
+    .admin-logo { display: flex; align-items: center; gap: 10px; color: white; font-weight: 800; font-size: 17px; }
+    .admin-logo-icon { width: 30px; height: 30px; background: linear-gradient(135deg, #0055dd, #0044bb); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+    .admin-topbar-right { display: flex; align-items: center; gap: 12px; }
+    .admin-user { display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,0.8); font-size: 14px; font-weight: 600; }
+    .admin-user img { width: 30px; height: 30px; border-radius: 50%; border: 2px solid rgba(0,100,255,0.5); }
+    .logout-btn { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.7); padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; }
+    .logout-btn:hover { background: rgba(239,68,68,0.25); color: #FCA5A5; border-color: rgba(239,68,68,0.3); }
+
+    .admin-body { flex: 1; display: flex; overflow: hidden; }
+
+    /* ===== SIDEBAR ===== */
+    .sidebar { width: 310px; background: #020b18; border-right: 1px solid rgba(0,100,255,0.1); display: flex; flex-direction: column; flex-shrink: 0; }
+    .sidebar-header { padding: 14px 18px; border-bottom: 1px solid rgba(0,100,255,0.1); }
+    .sidebar-title { color: white; font-size: 14px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+    .sidebar-filters { display: flex; gap: 5px; }
+    .filter-btn { flex: 1; padding: 6px 8px; border: 1px solid rgba(0,100,255,0.15); border-radius: 8px; background: transparent; color: rgba(255,255,255,0.4); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .filter-btn.active { background: rgba(0,80,200,0.25); border-color: rgba(0,100,255,0.5); color: #60a5fa; }
+    .sidebar-search { padding: 10px 18px; border-bottom: 1px solid rgba(0,100,255,0.1); }
+    .sidebar-search input { width: 100%; padding: 9px 12px; background: rgba(0,50,150,0.15); border: 1px solid rgba(0,100,255,0.15); border-radius: 10px; color: white; font-size: 13px; outline: none; font-family: inherit; }
+    .sidebar-search input::placeholder { color: rgba(255,255,255,0.25); }
+    .sidebar-search input:focus { border-color: rgba(0,100,255,0.5); }
+    .stats-bar { padding: 10px 18px; border-bottom: 1px solid rgba(0,100,255,0.1); display: flex; gap: 14px; }
+    .stat-item { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+    .stat-value { color: white; font-size: 17px; font-weight: 800; }
+    .stat-label { color: rgba(255,255,255,0.3); font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .tickets-list { flex: 1; overflow-y: auto; padding: 6px; }
+    .ticket-item { padding: 12px 14px; border-radius: 10px; cursor: pointer; transition: all 0.15s; margin-bottom: 3px; border: 1px solid transparent; }
+    .ticket-item:hover { background: rgba(0,60,180,0.1); }
+    .ticket-item.active { background: rgba(0,80,200,0.2); border-color: rgba(0,100,255,0.3); }
+    .ticket-item-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .ticket-item-avatar { width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; }
+    .ticket-item-name { color: white; font-size: 13px; font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ticket-item-time { color: rgba(255,255,255,0.25); font-size: 11px; flex-shrink: 0; }
+    .ticket-item-subject { color: rgba(255,255,255,0.45); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 5px; padding-left: 34px; }
+    .ticket-item-footer { display: flex; align-items: center; justify-content: space-between; padding-left: 34px; }
+    .ticket-item-id { color: rgba(255,255,255,0.25); font-size: 11px; font-family: monospace; }
+    .ticket-item-status { font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 999px; }
+    .status-open { background: rgba(34,197,94,0.2); color: #4ADE80; }
+    .status-closed { background: rgba(107,114,128,0.2); color: #9CA3AF; }
+    .unread-badge { background: #0055dd; color: white; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 999px; }
+
+    /* ===== CHAT AREA ===== */
+    .chat-area { flex: 1; display: flex; flex-direction: column; background: #000000; overflow: hidden; }
+    .chat-area-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
+    .chat-area-empty-icon { font-size: 56px; opacity: 0.2; }
+    .chat-area-empty h3 { font-size: 18px; color: rgba(255,255,255,0.25); }
+    .chat-area-empty p { font-size: 13px; color: rgba(255,255,255,0.15); }
+
+    .admin-chat-header { padding: 14px 22px; background: #020b18; border-bottom: 1px solid rgba(0,100,255,0.1); display: flex; align-items: center; gap: 12px; }
+    .admin-chat-header-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid rgba(0,100,255,0.4); }
+    .admin-chat-header-info h3 { color: white; font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+    .admin-chat-header-info p { color: rgba(255,255,255,0.35); font-size: 12px; }
+    .admin-chat-actions { margin-left: auto; display: flex; gap: 7px; }
+    .admin-chat-btn { padding: 7px 14px; border-radius: 9px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; display: flex; align-items: center; gap: 5px; }
+    .btn-close-ticket { background: rgba(239,68,68,0.18); color: #FCA5A5; border: 1px solid rgba(239,68,68,0.3) !important; }
+    .btn-close-ticket:hover { background: rgba(239,68,68,0.3); }
+    .btn-reopen-ticket { background: rgba(34,197,94,0.18); color: #4ADE80; border: 1px solid rgba(34,197,94,0.3) !important; }
+    .btn-reopen-ticket:hover { background: rgba(34,197,94,0.3); }
+    .btn-delete-ticket { background: rgba(239,68,68,0.08); color: rgba(239,68,68,0.6); border: 1px solid rgba(239,68,68,0.15) !important; }
+    .btn-delete-ticket:hover { background: rgba(239,68,68,0.2); color: #FCA5A5; }
+
+    .admin-messages { flex: 1; overflow-y: auto; padding: 18px 22px; display: flex; flex-direction: column; gap: 10px; background: #000000; }
+    .admin-message { display: flex; gap: 8px; max-width: 78%; animation: msgIn 0.2s ease; align-self: flex-start; }
+    @keyframes msgIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .admin-message.from-admin { align-self: flex-end; flex-direction: row-reverse; }
+    .admin-message-avatar { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; object-fit: cover; }
+    .admin-message-bubble { padding: 10px 14px; border-radius: 14px; font-size: 14px; line-height: 1.5; word-break: break-word; }
+    .admin-message.from-client .admin-message-bubble { background: rgba(0,50,150,0.25); color: rgba(255,255,255,0.9); border-bottom-left-radius: 4px; border: 1px solid rgba(0,100,255,0.15); }
+    .admin-message.from-admin .admin-message-bubble { background: linear-gradient(135deg, #0055dd, #0044bb); color: white; border-bottom-right-radius: 4px; }
+    .admin-message-meta { font-size: 10px; color: rgba(255,255,255,0.25); margin-top: 3px; }
+    .admin-message.from-admin .admin-message-meta { text-align: right; }
+
+    .admin-input-area { padding: 14px 22px; background: #020b18; border-top: 1px solid rgba(0,100,255,0.1); display: flex; gap: 8px; align-items: flex-end; }
+    .admin-input { flex: 1; padding: 11px 14px; background: rgba(0,50,150,0.15); border: 1px solid rgba(0,100,255,0.2); border-radius: 12px; color: white; font-size: 14px; outline: none; resize: none; max-height: 120px; font-family: inherit; transition: border-color 0.2s; }
+    .admin-input::placeholder { color: rgba(255,255,255,0.25); }
+    .admin-input:focus { border-color: rgba(0,100,255,0.6); }
+    .admin-send-btn { width: 42px; height: 42px; background: linear-gradient(135deg, #0055dd, #0044bb); border: none; border-radius: 12px; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 17px; transition: all 0.2s; flex-shrink: 0; }
+    .admin-send-btn:hover { transform: scale(1.05); box-shadow: 0 4px 15px rgba(0,80,200,0.5); }
+    .admin-closed-banner { padding: 12px 22px; background: rgba(0,0,0,0.3); border-top: 1px solid rgba(0,100,255,0.1); text-align: center; color: rgba(255,255,255,0.35); font-size: 13px; }
+
+    .admin-typing-area { padding: 0 22px 8px; display: none; }
+    .admin-typing-indicator { display: flex; align-items: center; gap: 5px; padding: 7px 11px; background: rgba(0,50,150,0.2); border-radius: 9px; width: fit-content; }
+    .admin-typing-dot { width: 6px; height: 6px; background: rgba(0,150,255,0.5); border-radius: 50%; animation: typingBounce 1.2s infinite; }
+    .admin-typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .admin-typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    /* ===== ROLES MODAL ===== */
+    .roles-not-in-guild { text-align:center; padding:30px 20px; color:rgba(255,255,255,0.3); font-size:13px; }
+    .role-row { display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:9px; cursor:pointer; transition:background 0.15s; border:1px solid transparent; margin-bottom:3px; }
+    .role-row:hover { background:rgba(0,60,180,0.15); border-color:rgba(0,100,255,0.15); }
+    .role-row.not-manageable { cursor:default; opacity:0.5; }
+    .role-row.not-manageable:hover { background:transparent; border-color:transparent; }
+    .role-row-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+    .role-row-name { flex:1; color:rgba(255,255,255,0.85); font-size:13px; font-weight:500; }
+    .role-row-toggle { width:36px; height:20px; border-radius:999px; border:none; cursor:pointer; position:relative; transition:background 0.2s; flex-shrink:0; }
+    .role-row-toggle::after { content:''; position:absolute; top:3px; width:14px; height:14px; border-radius:50%; background:white; transition:left 0.2s; }
+    .role-row-toggle.off { background:rgba(255,255,255,0.15); }
+    .role-row-toggle.off::after { left:3px; }
+    .role-row-toggle.on { background:#0055dd; }
+    .role-row-toggle.on::after { left:19px; }
+    .role-row-toggle.loading { opacity:0.5; pointer-events:none; }
+    .btn-manage-roles { background:rgba(0,80,200,0.18); color:#60a5fa; border:1px solid rgba(0,100,255,0.3) !important; }
+    .btn-manage-roles:hover { background:rgba(0,80,200,0.3); }
+
+    /* ===== CONFIRM MODAL ===== */
+    .confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+    .confirm-overlay.active { opacity: 1; pointer-events: all; }
+    .confirm-modal { background: #020b18; border: 1px solid rgba(0,100,255,0.2); border-radius: 20px; padding: 30px; max-width: 380px; width: 90%; text-align: center; transform: scale(0.9); transition: transform 0.2s; }
+    .confirm-overlay.active .confirm-modal { transform: scale(1); }
+    .confirm-modal h3 { color: white; font-size: 19px; margin-bottom: 8px; }
+    .confirm-modal p { color: rgba(255,255,255,0.45); font-size: 14px; margin-bottom: 22px; }
+    .confirm-actions { display: flex; gap: 10px; justify-content: center; }
+  </style>
+</head>
+<body>
+
+<!-- ===== ACESSO NEGADO ===== -->
+<div id="access-denied" style="display: none;">
+  <div style="font-size: 56px;">🔒</div>
+  <h2>Acesso Negado</h2>
+  <p>Você não tem permissão para acessar o painel admin.</p>
+  <a href="/" style="color: #A78BFA; font-size: 14px; text-decoration: none; margin-top: 8px;">← Voltar ao site</a>
+</div>
+
+<!-- ===== ADMIN SCREEN ===== -->
+<div id="admin-screen">
+  <div class="admin-topbar">
+    <div class="admin-logo">
+      <div class="admin-logo-icon">🎟️</div>
+      GouRp Admin
+    </div>
+    <div class="admin-topbar-right">
+      <div class="admin-user">
+        <img id="admin-avatar" src="" alt="Avatar">
+        <span id="admin-username">Admin</span>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">🚪 Sair</button>
+    </div>
+  </div>
+
+  <div class="admin-body">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-title">
+          <span>📋 Tickets</span>
+          <button onclick="loadTickets()" style="background: none; border: none; color: rgba(255,255,255,0.35); cursor: pointer; font-size: 15px;" title="Atualizar">🔄</button>
+        </div>
+        <div class="sidebar-filters">
+          <button class="filter-btn active" onclick="setFilter('all')" id="filter-all">Todos</button>
+          <button class="filter-btn" onclick="setFilter('open')" id="filter-open">Abertos</button>
+          <button class="filter-btn" onclick="setFilter('closed')" id="filter-closed">Fechados</button>
+        </div>
+      </div>
+      <div class="stats-bar" id="stats-bar">
+        <div class="stat-item"><span class="stat-value" id="stat-total">0</span><span class="stat-label">Total</span></div>
+        <div class="stat-item"><span class="stat-value" id="stat-open" style="color:#4ADE80">0</span><span class="stat-label">Abertos</span></div>
+        <div class="stat-item"><span class="stat-value" id="stat-closed" style="color:#9CA3AF">0</span><span class="stat-label">Fechados</span></div>
+        <div class="stat-item"><span class="stat-value" id="stat-unread" style="color:#A78BFA">0</span><span class="stat-label">Não lidos</span></div>
+      </div>
+      <div class="sidebar-search">
+        <input type="text" placeholder="🔍 Buscar tickets..." id="search-input" oninput="filterTickets(this.value)">
+      </div>
+      <div class="tickets-list" id="tickets-list">
+        <div style="text-align:center;padding:40px 20px;color:rgba(255,255,255,0.2);">
+          <div class="spinner" style="margin:0 auto 12px;"></div>
+          <p style="font-size:13px;">Carregando...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHAT AREA -->
+    <div class="chat-area" id="chat-area">
+      <div class="chat-area-empty" id="chat-empty">
+        <div class="chat-area-empty-icon">💬</div>
+        <h3>Selecione um ticket</h3>
+        <p>Escolha um ticket na lista para iniciar o atendimento</p>
+      </div>
+
+      <div id="chat-content" style="display:none;flex-direction:column;height:100%;">
+        <div class="admin-chat-header">
+          <img class="admin-chat-header-avatar" id="chat-client-avatar" src="" alt="Avatar" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'">
+          <div class="admin-chat-header-info">
+            <h3 id="chat-client-name">Cliente</h3>
+            <p id="chat-ticket-info">Ticket #ID</p>
+          </div>
+          <div class="admin-chat-actions" id="chat-actions"></div>
+        </div>
+        <!-- Cargos do Discord -->
+        <div id="admin-roles-wrapper" style="display:none;align-items:center;flex-wrap:wrap;gap:5px;padding:8px 22px;background:#020b18;border-bottom:1px solid rgba(0,100,255,0.08);">
+          <div id="admin-roles-container"></div>
+        </div>
+        <div class="admin-messages" id="admin-messages"></div>
+        <div class="admin-typing-area" id="admin-typing-area">
+          <div class="admin-typing-indicator">
+            <div class="admin-typing-dot"></div><div class="admin-typing-dot"></div><div class="admin-typing-dot"></div>
+            <span style="font-size:12px;color:rgba(255,255,255,0.25);margin-left:4px;">Cliente está digitando...</span>
+          </div>
+        </div>
+        <div id="admin-input-area" class="admin-input-area">
+          <textarea class="admin-input" id="admin-input" placeholder="Digite sua resposta..." rows="1" onkeydown="handleAdminKey(event)" oninput="autoResizeAdmin(this); notifyAdminTyping()"></textarea>
+          <button class="admin-send-btn" onclick="sendAdminMessage()">➤</button>
+        </div>
+        <div id="admin-closed-banner" class="admin-closed-banner" style="display:none;">
+          🔒 Ticket encerrado — reabra para continuar o atendimento
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ROLES MODAL ===== -->
+<div class="confirm-overlay" id="roles-modal-overlay">
+  <div class="confirm-modal" style="max-width:460px;width:95%;max-height:80vh;display:flex;flex-direction:column;padding:0;overflow:hidden;">
+    <div style="padding:22px 24px 16px;border-bottom:1px solid rgba(0,100,255,0.12);flex-shrink:0;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.3);margin-bottom:3px;">Gerenciar cargos de</div>
+          <h3 style="color:white;font-size:17px;font-weight:700;margin:0;" id="roles-modal-username">Usuário</h3>
+        </div>
+        <button onclick="closeRolesModal()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;">✕</button>
+      </div>
+      <input type="text" id="roles-search-input" placeholder="🔍 Buscar cargo..." oninput="filterRolesList(this.value)"
+        style="width:100%;padding:9px 12px;background:rgba(0,50,150,0.15);border:1px solid rgba(0,100,255,0.2);border-radius:10px;color:white;font-size:13px;outline:none;font-family:inherit;box-sizing:border-box;">
+    </div>
+    <div id="roles-modal-list" style="flex:1;overflow-y:auto;padding:10px 12px;">
+      <div style="text-align:center;padding:30px;color:rgba(255,255,255,0.2);"><p style="font-size:13px;">Carregando cargos...</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CONFIRM MODAL ===== -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-modal">
+    <div style="font-size:44px;margin-bottom:14px;" id="confirm-icon">⚠️</div>
+    <h3 id="confirm-title">Confirmar ação</h3>
+    <p id="confirm-message">Tem certeza?</p>
+    <div class="confirm-actions">
+      <button class="admin-chat-btn" style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);border:1px solid rgba(255,255,255,0.1)!important;padding:9px 22px;" onclick="closeConfirm()">Cancelar</button>
+      <button class="admin-chat-btn" id="confirm-action-btn" style="padding:9px 22px;">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script src="js/admin.js"></script>
+</body>
+</html>
