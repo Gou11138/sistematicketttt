@@ -5,14 +5,64 @@ let pollingInterval = null;
 let userDiscordRoles = []; // cargos do usuário no servidor
 let renderedMessageIds = new Set(); // IDs já exibidos, evita duplicatas
 
+// ==================== NAVBAR ====================
+let currentNav = 'inicio';
+
+function navGoTo(tab) {
+  currentNav = tab;
+
+  // Atualiza links ativos
+  ['inicio','goupay','loja'].forEach(t => {
+    const el = document.getElementById('nav-' + t);
+    if (el) el.classList.toggle('active', t === tab);
+  });
+
+  // Esconde tudo
+  const allSections = ['hero-section','features-section','main-content','footer-section','goupay-section','loja-section'];
+  allSections.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+
+  if (tab === 'inicio') {
+    // Volta para o estado correto da tela inicial
+    if (currentTicket) {
+      document.getElementById('main-content').style.display = 'block';
+      document.getElementById('chat-section').style.display = 'block';
+    } else {
+      document.getElementById('hero-section').style.display = 'flex';
+      document.getElementById('features-section').style.display = 'block';
+      document.getElementById('footer-section').style.display = 'block';
+    }
+  } else if (tab === 'goupay') {
+    document.getElementById('goupay-section').style.display = 'block';
+  } else if (tab === 'loja') {
+    document.getElementById('loja-section').style.display = 'block';
+  }
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function showNavbar(user, isAdmin) {
+  const navbar = document.getElementById('top-navbar');
+  if (!navbar) return;
+  navbar.style.display = 'flex';
+  document.getElementById('navbar-avatar').src = user.avatarUrl;
+  document.getElementById('navbar-name').textContent = user.username;
+  const adminLink = document.getElementById('navbar-admin-link');
+  if (adminLink) adminLink.style.display = isAdmin ? 'inline-flex' : 'none';
+}
+
 // ==================== TELAS ====================
 function showLoginScreen() {
   const loginEl = document.getElementById('discord-login-screen');
   if (loginEl) loginEl.style.display = 'flex';
-  ['hero-section','features-section','main-content','footer-section'].forEach(id => {
+  ['hero-section','features-section','main-content','footer-section','goupay-section','loja-section'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });
+  const navbar = document.getElementById('top-navbar');
+  if (navbar) navbar.style.display = 'none';
 }
 function showHomeSection() {
   const loginEl = document.getElementById('discord-login-screen');
@@ -23,7 +73,14 @@ function showHomeSection() {
   document.getElementById('footer-section').style.display = 'block';
   document.getElementById('chat-section').style.display = 'none';
   document.getElementById('new-ticket-section').style.display = 'none';
+  if (document.getElementById('goupay-section')) document.getElementById('goupay-section').style.display = 'none';
+  if (document.getElementById('loja-section')) document.getElementById('loja-section').style.display = 'none';
   stopPolling();
+  currentNav = 'inicio';
+  ['inicio','goupay','loja'].forEach(t => {
+    const el = document.getElementById('nav-' + t);
+    if (el) el.classList.toggle('active', t === 'inicio');
+  });
 }
 function showNewTicket() {
   document.getElementById('discord-login-screen').style.display = 'none';
@@ -146,6 +203,9 @@ async function init() {
     document.getElementById('user-avatar').src = currentUser.avatarUrl;
     document.getElementById('user-name').textContent = currentUser.username;
     if (data.isAdmin) document.getElementById('admin-link').style.display = 'inline-flex';
+
+    // Mostra a navbar flutuante
+    showNavbar(currentUser, data.isAdmin);
 
     // Buscar cargos do Discord em paralelo com o ticket
     const [rolesData, tr] = await Promise.all([
