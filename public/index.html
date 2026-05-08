@@ -89,6 +89,99 @@
       display: none;
     }
 
+    /* ===== NAVBAR FLUTUANTE ===== */
+    .top-navbar {
+      position: fixed;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9000;
+      background: rgba(255,255,255,0.10);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 999px;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+      min-width: 0;
+      max-width: calc(100vw - 32px);
+    }
+    .navbar-brand {
+      display: flex; align-items: center; gap: 8px;
+      color: white; font-size: 17px; font-weight: 800;
+      text-decoration: none; margin-right: 8px;
+      white-space: nowrap;
+    }
+    .navbar-brand-icon {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, #0066ff, #0044cc);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; flex-shrink: 0;
+    }
+    .navbar-links {
+      display: flex; align-items: center; gap: 2px;
+    }
+    .navbar-link {
+      color: rgba(255,255,255,0.75);
+      font-size: 14px; font-weight: 500;
+      padding: 7px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none; background: none;
+      white-space: nowrap;
+      text-decoration: none;
+    }
+    .navbar-link:hover {
+      color: white;
+      background: rgba(255,255,255,0.12);
+    }
+    .navbar-link.active {
+      color: white;
+      background: rgba(255,255,255,0.18);
+      font-weight: 600;
+    }
+    .navbar-divider {
+      width: 1px; height: 20px;
+      background: rgba(255,255,255,0.15);
+      margin: 0 6px;
+      flex-shrink: 0;
+    }
+    .navbar-right {
+      display: flex; align-items: center; gap: 8px; margin-left: 8px;
+    }
+    .navbar-user {
+      display: flex; align-items: center; gap: 7px;
+      color: white; font-size: 13px; font-weight: 600;
+      white-space: nowrap;
+    }
+    .navbar-user img {
+      width: 26px; height: 26px; border-radius: 50%;
+      border: 2px solid rgba(0,100,255,0.5);
+      flex-shrink: 0;
+    }
+    .navbar-admin-btn {
+      background: rgba(0,80,200,0.35);
+      border: 1px solid rgba(0,100,255,0.5);
+      color: #93c5fd; padding: 5px 12px;
+      border-radius: 999px; font-size: 12px; font-weight: 600;
+      cursor: pointer; text-decoration: none;
+      transition: all 0.2s; white-space: nowrap;
+    }
+    .navbar-admin-btn:hover { background: rgba(0,80,200,0.55); }
+    .navbar-logout-btn {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.6); padding: 5px 12px;
+      border-radius: 999px; font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s; white-space: nowrap;
+    }
+    .navbar-logout-btn:hover { background: rgba(239,68,68,0.25); color: #FCA5A5; }
+
     /* ===== HERO ===== */
     .hero {
       background: transparent;
@@ -96,11 +189,9 @@
       display: flex; flex-direction: column;
       position: relative;
       z-index: 1;
+      padding-top: 80px; /* espaço para a navbar fixa */
     }
-    .hero-nav {
-      padding: 16px 32px;
-      display: flex; align-items: center; justify-content: space-between;
-    }
+    .hero-nav { display: none; } /* navbar antiga escondida */
     .logo {
       display: flex; align-items: center; gap: 10px;
       color: white; font-size: 20px; font-weight: 800; text-decoration: none;
@@ -141,6 +232,29 @@
       cursor: pointer; transition: all 0.2s;
     }
     .nav-logout-btn:hover { background: rgba(239,68,68,0.2); color: #FCA5A5; }
+
+    /* ===== ABA GOUPAY ===== */
+    #goupay-section {
+      display: none;
+      min-height: 100vh;
+      position: relative; z-index: 1;
+      padding-top: 80px;
+    }
+    /* ===== ABA LOJA ===== */
+    #loja-section {
+      display: none;
+      min-height: 100vh;
+      position: relative; z-index: 1;
+      padding-top: 80px;
+    }
+    .coming-soon-wrap {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      min-height: 70vh; gap: 20px; text-align: center; padding: 40px 20px;
+    }
+    .coming-soon-icon { font-size: 72px; }
+    .coming-soon-wrap h2 { color: white; font-size: 32px; font-weight: 800; }
+    .coming-soon-wrap p { color: rgba(255,255,255,0.45); font-size: 16px; max-width: 400px; line-height: 1.7; }
 
     .hero-content {
       flex: 1; display: flex; flex-direction: column;
@@ -313,6 +427,29 @@
 </video>
 <div class="video-overlay"></div>
 
+<!-- ===== NAVBAR FLUTUANTE ===== -->
+<nav class="top-navbar" id="top-navbar" style="display:none;">
+  <a href="#" class="navbar-brand" onclick="navGoTo('inicio'); return false;">
+    <div class="navbar-brand-icon">🎟️</div>
+    GouRp
+  </a>
+  <div class="navbar-divider"></div>
+  <div class="navbar-links">
+    <button class="navbar-link active" id="nav-inicio" onclick="navGoTo('inicio')">Início</button>
+    <button class="navbar-link" id="nav-goupay" onclick="navGoTo('goupay')">GouPay</button>
+    <button class="navbar-link" id="nav-loja" onclick="navGoTo('loja')">Loja</button>
+  </div>
+  <div class="navbar-divider"></div>
+  <div class="navbar-right">
+    <div class="navbar-user">
+      <img id="navbar-avatar" src="" alt="Avatar">
+      <span id="navbar-name"></span>
+    </div>
+    <a href="/admin" class="navbar-admin-btn" id="navbar-admin-link" style="display:none;">⚙️ Admin</a>
+    <button class="navbar-logout-btn" onclick="doLogout()">Sair</button>
+  </div>
+</nav>
+
 <!-- ===== DISCORD LOGIN SCREEN ===== -->
 <div id="discord-login-screen" style="display: flex;">
   <div class="discord-login-card">
@@ -465,6 +602,24 @@
     </div>
   </div>
 
+</div>
+
+<!-- ===== ABA GOUPAY ===== -->
+<div id="goupay-section">
+  <div class="coming-soon-wrap">
+    <div class="coming-soon-icon">💳</div>
+    <h2>GouPay</h2>
+    <p>Em breve. O sistema de pagamentos do GouRp estará disponível aqui.</p>
+  </div>
+</div>
+
+<!-- ===== ABA LOJA ===== -->
+<div id="loja-section">
+  <div class="coming-soon-wrap">
+    <div class="coming-soon-icon">🛒</div>
+    <h2>Loja</h2>
+    <p>Em breve. Confira os produtos e serviços disponíveis na loja do GouRp.</p>
+  </div>
 </div>
 
 <footer id="footer-section" style="display: none;">
