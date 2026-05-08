@@ -324,14 +324,93 @@
       position: relative; z-index: 1;
       padding-top: 80px;
     }
-    .coming-soon-wrap {
+    .loja-card {
+      background: rgba(8,15,30,0.85);
+      border: 1px solid rgba(0,100,255,0.15);
+      border-radius: 22px;
+      overflow: hidden;
+      backdrop-filter: blur(12px);
+      transition: all 0.3s;
+      position: relative;
       display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      min-height: 70vh; gap: 20px; text-align: center; padding: 40px 20px;
     }
-    .coming-soon-icon { font-size: 72px; }
-    .coming-soon-wrap h2 { color: white; font-size: 32px; font-weight: 800; }
-    .coming-soon-wrap p { color: rgba(255,255,255,0.45); font-size: 16px; max-width: 400px; line-height: 1.7; }
+    .loja-card:hover {
+      transform: translateY(-6px);
+      border-color: rgba(0,100,255,0.4);
+      box-shadow: 0 20px 60px rgba(0,80,200,0.25);
+    }
+    .loja-card-badge {
+      position: absolute; top: 14px; left: 14px; z-index: 2;
+      background: linear-gradient(135deg, #7c3aed, #6d28d9);
+      color: white; font-size: 12px; font-weight: 700;
+      padding: 5px 12px; border-radius: 999px;
+      box-shadow: 0 4px 14px rgba(124,58,237,0.5);
+    }
+    .loja-card-badge-blue {
+      background: linear-gradient(135deg, #0055dd, #0044bb);
+      box-shadow: 0 4px 14px rgba(0,80,200,0.5);
+    }
+    .loja-card-img-wrap {
+      position: relative; width: 100%; height: 220px; overflow: hidden;
+    }
+    .loja-card-img {
+      width: 100%; height: 100%; object-fit: cover;
+      transition: transform 0.4s ease;
+    }
+    .loja-card:hover .loja-card-img { transform: scale(1.05); }
+    .loja-card-img-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to bottom, transparent 40%, rgba(8,15,30,0.95) 100%);
+    }
+    .loja-card-body {
+      padding: 22px 24px 24px;
+      display: flex; flex-direction: column; gap: 14px; flex: 1;
+    }
+    .loja-card-title {
+      color: white; font-size: 20px; font-weight: 800; margin: 0;
+    }
+    .loja-card-desc {
+      color: rgba(255,255,255,0.45); font-size: 14px; line-height: 1.65; margin: 0;
+    }
+    .loja-card-features {
+      display: flex; flex-wrap: wrap; gap: 8px;
+    }
+    .loja-feat {
+      background: rgba(0,100,255,0.1);
+      border: 1px solid rgba(0,100,255,0.2);
+      color: rgba(255,255,255,0.65);
+      font-size: 12px; font-weight: 500;
+      padding: 4px 10px; border-radius: 999px;
+    }
+    .loja-card-footer {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; margin-top: auto; padding-top: 16px;
+      border-top: 1px solid rgba(255,255,255,0.07);
+      flex-wrap: wrap;
+    }
+    .loja-card-price {
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .loja-price-label {
+      color: rgba(255,255,255,0.35); font-size: 11px; font-weight: 500;
+    }
+    .loja-price-value {
+      color: white; font-size: 24px; font-weight: 800;
+    }
+    .loja-btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: linear-gradient(135deg, #7c3aed, #6d28d9);
+      color: white; padding: 12px 22px; border-radius: 12px;
+      font-size: 14px; font-weight: 700; text-decoration: none;
+      transition: all 0.2s; box-shadow: 0 6px 20px rgba(124,58,237,0.4);
+      white-space: nowrap;
+    }
+    .loja-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(124,58,237,0.55); }
+    .loja-btn-blue {
+      background: linear-gradient(135deg, #0055dd, #0044bb);
+      box-shadow: 0 6px 20px rgba(0,80,200,0.4);
+    }
+    .loja-btn-blue:hover { box-shadow: 0 10px 30px rgba(0,80,200,0.55); }
 
     .hero-content {
       flex: 1; display: flex; flex-direction: column;
@@ -849,11 +928,90 @@
 
 <!-- ===== ABA LOJA ===== -->
 <div id="loja-section">
-  <div class="coming-soon-wrap">
-    <div class="coming-soon-icon">🛒</div>
-    <h2>Loja</h2>
-    <p>Em breve. Confira os produtos e serviços disponíveis na loja do GouRp.</p>
+
+  <!-- HEADER DA LOJA -->
+  <div style="text-align:center;padding:70px 24px 50px;position:relative;z-index:1;">
+    <div style="display:inline-flex;align-items:center;gap:10px;background:rgba(0,100,255,0.15);border:1px solid rgba(0,100,255,0.35);border-radius:999px;padding:6px 18px;color:#93c5fd;font-size:13px;font-weight:600;margin-bottom:24px;">
+      🛒 Loja GouRp
+    </div>
+    <h1 style="color:white;font-size:clamp(28px,5vw,48px);font-weight:800;line-height:1.1;margin-bottom:14px;">
+      Produtos <span style="background:linear-gradient(135deg,#60a5fa,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">exclusivos</span>
+    </h1>
+    <p style="color:rgba(255,255,255,0.45);font-size:16px;max-width:460px;margin:0 auto;line-height:1.7;">
+      Adquira nossos produtos com entrega automática e pagamento seguro via Pix.
+    </p>
   </div>
+
+  <!-- GRID DE PRODUTOS -->
+  <div style="max-width:900px;margin:0 auto;padding:0 24px 80px;display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:28px;position:relative;z-index:1;">
+
+    <!-- CARD: GOU MENU COMPLETO -->
+    <div class="loja-card">
+      <div class="loja-card-badge">⭐ Mais completo</div>
+      <div class="loja-card-img-wrap">
+        <img src="https://i.imgur.com/Dd4EOMS.png" alt="Gou Menu Completo" class="loja-card-img">
+        <div class="loja-card-img-overlay"></div>
+      </div>
+      <div class="loja-card-body">
+        <h3 class="loja-card-title">Gou Menu Completo</h3>
+        <p class="loja-card-desc">A versão mais completa do sistema de menu da GouRp. Tudo que você precisa para gerenciar seu negócio com mais recursos e funcionalidades avançadas.</p>
+        <div class="loja-card-features">
+          <span class="loja-feat">✅ Entrega automática</span>
+          <span class="loja-feat">🔒 Pagamento seguro</span>
+          <span class="loja-feat">⚡ Acesso imediato</span>
+        </div>
+        <div class="loja-card-footer">
+          <div class="loja-card-price">
+            <span class="loja-price-label">Por apenas</span>
+            <span class="loja-price-value">R$ 37,90</span>
+          </div>
+          <a href="https://www.goupay.com.br/checkout/0e84bff9-cd6c-4f57-b800-0a167895ffa1" target="_blank" class="loja-btn">
+            🛒 Comprar agora
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARD: GOU MENU SIMPLES -->
+    <div class="loja-card">
+      <div class="loja-card-badge loja-card-badge-blue">💡 Mais acessível</div>
+      <div class="loja-card-img-wrap">
+        <img src="https://i.imgur.com/80LXYqy.png" alt="Gou Menu Simples" class="loja-card-img">
+        <div class="loja-card-img-overlay"></div>
+      </div>
+      <div class="loja-card-body">
+        <h3 class="loja-card-title">Gou Menu Simples</h3>
+        <p class="loja-card-desc">A versão essencial do sistema de menu da GouRp. Ideal para quem está começando e quer uma solução prática e objetiva.</p>
+        <div class="loja-card-features">
+          <span class="loja-feat">✅ Entrega automática</span>
+          <span class="loja-feat">🔒 Pagamento seguro</span>
+          <span class="loja-feat">⚡ Acesso imediato</span>
+        </div>
+        <div class="loja-card-footer">
+          <div class="loja-card-price">
+            <span class="loja-price-label">Por apenas</span>
+            <span class="loja-price-value">R$ 12,90</span>
+          </div>
+          <a href="https://www.goupay.com.br/checkout/0eb0d9a1-9286-4d99-b080-b21a52709789" target="_blank" class="loja-btn loja-btn-blue">
+            🛒 Comprar agora
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RODAPÉ DA LOJA -->
+  <div style="text-align:center;padding:0 24px 60px;position:relative;z-index:1;">
+    <div style="display:inline-flex;align-items:center;gap:20px;background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:16px 28px;flex-wrap:wrap;justify-content:center;gap:16px;">
+      <span style="color:rgba(255,255,255,0.5);font-size:13px;display:flex;align-items:center;gap:6px;">🔒 Pagamento 100% seguro</span>
+      <span style="color:rgba(255,255,255,0.2);">|</span>
+      <span style="color:rgba(255,255,255,0.5);font-size:13px;display:flex;align-items:center;gap:6px;">⚡ Entrega automática via Pix</span>
+      <span style="color:rgba(255,255,255,0.2);">|</span>
+      <span style="color:rgba(255,255,255,0.5);font-size:13px;display:flex;align-items:center;gap:6px;">🛡️ Ambiente seguro GouPay</span>
+    </div>
+  </div>
+
 </div>
 
 <footer id="footer-section" style="display: none;">
